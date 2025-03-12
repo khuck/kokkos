@@ -122,6 +122,9 @@ if(NOT HAS_PARENT)
   endif()
 endif()
 
+add_compile_options(-fsanitize=address)
+add_link_options(-fsanitize=address)
+
 if(NOT CMAKE_SIZEOF_VOID_P)
   string(FIND ${CMAKE_CXX_COMPILER} nvcc_wrapper FIND_IDX)
   if(NOT FIND_IDX STREQUAL -1)

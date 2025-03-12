@@ -55,6 +55,7 @@ SetOrRange make_candidate_range(double lower, double upper, double step,
 SetOrRange make_candidate_range(int64_t lower, int64_t upper, int64_t step,
                                 bool openLower, bool openUpper);
 size_t get_new_context_id();
+size_t get_current_context_id();
 void begin_context(size_t context_id);
 void end_context(size_t context_id);
 namespace Impl {
@@ -367,7 +368,7 @@ class MultidimensionalSparseTuningProblem {
   }
 
   auto begin() {
-    context = Kokkos::Tools::Experimental::get_new_context_id();
+    context = Kokkos::Tools::Experimental::get_current_context_id();
     ValueArray values;
     for (int x = 0; x < space_dimensionality; ++x) {
       values[x] = Kokkos::Tools::Experimental::make_variable_value(
@@ -378,7 +379,7 @@ class MultidimensionalSparseTuningProblem {
     return Impl::get_point(m_space, values);
   }
 
-  auto end() { end_context(context); }
+  auto end() { end_context(Kokkos::Tools::Experimental::get_current_context_id()); }
 };
 
 template <typename Tuner>
@@ -579,7 +580,7 @@ class SingleDimensionalRangeTuner {
   }
 
   Bound begin() {
-    context = Kokkos::Tools::Experimental::get_new_context_id();
+    context = Kokkos::Tools::Experimental::get_current_context_id();
     Kokkos::Tools::Experimental::begin_context(context);
     auto tuned_value =
         Kokkos::Tools::Experimental::make_variable_value(id, default_value);
@@ -588,7 +589,7 @@ class SingleDimensionalRangeTuner {
     return tuning_util::get(tuned_value);
   }
 
-  void end() { Kokkos::Tools::Experimental::end_context(context); }
+  void end() { Kokkos::Tools::Experimental::end_context(Kokkos::Tools::Experimental::get_current_context_id()); }
 
   template <typename Functor>
   void with_tuned_value(Functor& func) {
@@ -724,13 +725,13 @@ struct CategoricalTuner {
     tuning_variable_id = declare_output_type(name, info);
   }
   const Choice& begin() {
-    context = get_new_context_id();
+    context = get_current_context_id();
     begin_context(context);
     VariableValue value = make_variable_value(tuning_variable_id, int64_t(0));
     request_output_values(context, 1, &value);
     return choices[value.value.int_value];
   }
-  void end() { end_context(context); }
+  void end() { end_context(Kokkos::Tools::Experimental::get_current_context_id()); }
 };
 
 template <typename Choice>
